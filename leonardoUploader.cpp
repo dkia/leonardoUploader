@@ -16,6 +16,11 @@ struct termios termAttr;
 
 int main(int argc, char *argv[])
 {
+	if(argv[1] == NULL || !strcmp(argv[1], "--help")) {
+		cout << "Usage: " << argv[0] << " serialport [hexfile]" << endl;
+		exit(1);
+	}
+	
 	//open serial
 	fd = open(argv[1], O_RDWR | O_NOCTTY | O_NDELAY);
 	if (fd == -1)
@@ -40,24 +45,20 @@ int main(int argc, char *argv[])
 	close(fd);
 	cout << "Reset Arduino Leonardo...." << endl;
 
+	if(argv[2] == NULL) {
+		cout << "No hex file given." << endl;
+		exit(0);
+	}
+
 	//delay 2 seconds after reseting
 	sleep(2);
 
-	//Upload firmware .hex
-	char comport[32];
-	strcpy(comport, "-P");
-	strcat(comport,argv[1]);
-	char hexfile[128];
-	strcpy(hexfile, " -Uflash:w:");
-	strcat(hexfile,argv[2]);
-	char cmd[256];
-	strcpy(cmd, "avrdude -pm32u4 -cavr109 -D ");
-	strcat(cmd, comport);
-	strcat(cmd,hexfile);
-	//retSystem = system("avrdude -pm32u4 -cavr109 -D -P/dev/ttyACM0 -b57600 -Uflash:w:Blink.ino.hex");
-	cout << "avrdude cmd :" << cmd << endl;
+	char cmd[512];
+	snprintf(cmd, sizeof(cmd), "avrdude -pm32u4 -cavr109 -D -P %s -Uflash:w:%s", argv[1], argv[2]);
+	
+	cout << "avrdude cmd: " << cmd << endl;
 	retSystem = system(cmd);
 
-	exit(0);
+	exit(retSystem);
 	return 0;
 }
